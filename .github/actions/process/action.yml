@@ -20,7 +20,7 @@ runs:
     - name: Install KennyBot dependencies
       shell: bash
       run: npm ci
-      working-directory: ${{ github.action_path }}/../..
+      working-directory: ${{ github.action_path }}/../../..
 
     - name: Process decision
       shell: bash
@@ -28,4 +28,4 @@ runs:
         DECISION: ${{ inputs.decision }}
         ISSUE_NUMBER: ${{ inputs.issue-number }}
         GH_TOKEN: ${{ github.token }}
-      run: node '${{ github.action_path }}/../../process/process.mjs'
+      run: node '${{ github.action_path }}/../../../process/process.mjs'
