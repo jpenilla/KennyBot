@@ -69,8 +69,7 @@ Two jobs, strict separation of concerns:
 
 | Decision | Action |
 |---|---|
-| `valid` | Add suggested labels, leave open |
-| `needs-info` | Comment asking for details, leave open |
+| `leave-open` | Comment (optional) + add labels, leave open |
 | `close-invalid` | Comment explaining why, close |
-| `close-duplicate` | Comment referencing original, close |
+| `close-duplicate` | Comment referencing original + `duplicateOf`, close |
 | `close-done` | Comment noting already addressed, close |

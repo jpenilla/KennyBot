@@ -5,7 +5,7 @@ import { Octokit } from '@octokit/rest';
 import * as v from 'valibot';
 
 const TriageResultSchema = v.object({
-  decision: v.picklist(['valid', 'needs-info', 'close-invalid', 'close-duplicate', 'close-done']),
+  decision: v.picklist(['leave-open', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.optional(v.string()),
   duplicateOf: v.optional(v.number()),
   labels: v.optional(v.array(v.string()), []),

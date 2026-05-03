@@ -33,7 +33,7 @@ You have `gh` available to search for duplicates — use it to find related issu
 2. **Assess validity**
    - **Spam** — clearly promotional, irrelevant, or abusive
    - **Incomplete** — missing crucial information (steps to reproduce, logs, version, etc.)
-     *If incomplete but potentially valid, use the **needs-info** decision instead of closing.*
+     *If incomplete but potentially valid, use **leave-open** with a comment asking for info.*
    - **Not reproducible** — the described behavior cannot be replicated
    - **Duplicate** — already reported in another open or closed issue
    - **Off-topic** — not relevant to this project
@@ -41,10 +41,9 @@ You have `gh` available to search for duplicates — use it to find related issu
 
 3. **Return your decision**
 
-   Choose from these, including a `comment` when closing and `labels` from the repo as appropriate:
+   Choose from these, including `comment` and `labels` from the repo as appropriate:
 
-   - **valid** — legitimate bug report, feature request, or improvement. Leave open. Optionally suggest labels.
-   - **needs-info** — potentially valid but missing details. Comment asking for info, leave open.
+   - **leave-open** — legitimate, or needs more info. Add comment + labels if useful, leave open.
    - **close-invalid** — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
-   - **close-duplicate** — already reported. Reference the duplicate issue number, close.
+   - **close-duplicate** — already reported. Include `duplicateOf` with the issue number, close.
    - **close-done** — already fixed or addressed. Reference the fix if known, close.

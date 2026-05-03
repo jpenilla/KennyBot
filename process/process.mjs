@@ -2,7 +2,7 @@ import { Octokit } from '@octokit/rest';
 import * as v from 'valibot';
 
 const DecisionSchema = v.object({
-  decision: v.picklist(['valid', 'needs-info', 'close-invalid', 'close-duplicate', 'close-done']),
+  decision: v.picklist(['leave-open', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.optional(v.string()),
   duplicateOf: v.optional(v.number()),
   labels: v.optional(v.array(v.string()), []),
@@ -25,32 +25,19 @@ const octokit = new Octokit({ auth: ghToken });
 const suggestedLabels = parsed.labels ?? [];
 
 switch (parsed.decision) {
-  case 'valid': {
-    console.log(`Issue #${issueNumber}: valid`);
-    if (suggestedLabels.length > 0) {
-      await octokit.issues.addLabels({
-        owner,
-        repo,
-        issue_number: issueNumber,
-        labels: suggestedLabels,
+  case 'leave-open': {
+    console.log(`Issue #${issueNumber}: leave-open`);
+    if (parsed.comment) {
+      await octokit.issues.createComment({
+        owner, repo, issue_number: issueNumber,
+        body: parsed.comment,
       });
-      console.log(`  Added labels: ${suggestedLabels.join(', ')}`);
     }
-    break;
-  }
-  case 'needs-info': {
-    console.log(`Issue #${issueNumber}: needs more info`);
     if (suggestedLabels.length > 0) {
       await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
+      console.log(`  Added labels: ${suggestedLabels.join(', ')}`);
     }
-    await octokit.issues.createComment({
-      owner,
-      repo,
-      issue_number: issueNumber,
-      body: parsed.comment || 'Could you please provide more information about this issue?',
-    });
-    // Leave open — author can respond with the missing details.
-    console.log(`  Commented, left open: ${parsed.comment}`);
+    if (parsed.comment) console.log(`  Commented: ${parsed.comment}`);
     break;
   }
   case 'close-invalid': {
