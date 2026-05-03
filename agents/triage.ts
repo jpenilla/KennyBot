@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import type { FlueContext } from '@flue/sdk/client';
 import { defineCommand } from '@flue/sdk/node';
@@ -72,7 +73,7 @@ export default async function ({ init, payload }: FlueContext) {
     updatedAt: c.updated_at,
   }));
 
-  const commentsPath = `/workspace/.kennybot/comments-${payload.issueNumber}.json`;
+  const commentsPath = path.join(os.tmpdir(), '.kennybot', `comments-${payload.issueNumber}.json`);
   await fs.mkdir(path.dirname(commentsPath), { recursive: true });
   await fs.writeFile(commentsPath, JSON.stringify(commentData, null, 2));
 
@@ -89,7 +90,6 @@ export default async function ({ init, payload }: FlueContext) {
     commentCount: issue.comments,
     commentsFile: issue.comments > 0 ? commentsPath : undefined,
   };
-  issue.pull_request
   
   const agent = await init({
     sandbox: 'local',
