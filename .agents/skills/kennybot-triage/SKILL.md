@@ -14,7 +14,8 @@ The repository is mounted at **/workspace** — you can browse, grep, and read f
 **Author**: <issueAuthor>
 **Body**: <issueBody>
 
-**Available repo labels**: <repoLabels>
+**Available repo labels**:
+<repoLabels>
 
 Your job is to determine whether this issue is valid, invalid, a duplicate, or already done.
 You have `gh` available to search for duplicates — use it to find related issues.

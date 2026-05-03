@@ -46,7 +46,9 @@ export default async function ({ init, payload }: FlueContext) {
     }),
   ]);
 
-  const repoLabels = labels.map((l) => l.name);
+  const repoLabels = labels
+    .map((l) => l.description ? `- ${l.name}: ${l.description}` : `- ${l.name}`)
+    .join('\n');
 
   const agent = await init({
     sandbox: 'local',
