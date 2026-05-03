@@ -2,7 +2,7 @@ import { Octokit } from '@octokit/rest';
 import * as v from 'valibot';
 
 const DecisionSchema = v.object({
-  decision: v.picklist(['valid', 'invalid', 'duplicate', 'done']),
+  decision: v.picklist(['valid', 'invalid', 'duplicate', 'done', 'needs-info']),
   comment: v.optional(v.string()),
   duplicateOf: v.optional(v.number()),
   tags: v.optional(v.array(v.string()), []),
@@ -64,6 +64,21 @@ switch (parsed.decision) {
     await octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
     await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed' });
     console.log(`  Closed as duplicate: ${parsed.comment}`);
+    break;
+  }
+  case 'needs-info': {
+    console.log(`Issue #${issueNumber}: needs more info`);
+    if (tags.length > 0) {
+      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: tags }).catch(() => {});
+    }
+    await octokit.issues.createComment({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      body: parsed.comment || 'Could you please provide more information about this issue?',
+    });
+    // Leave open — author can respond with the missing details.
+    console.log(`  Commented, left open: ${parsed.comment}`);
     break;
   }
   case 'done': {

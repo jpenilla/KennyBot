@@ -33,6 +33,7 @@ You have `gh` available to search for duplicates — use it to find related issu
 2. **Assess validity**
    - **Spam** — clearly promotional, irrelevant, or abusive
    - **Incomplete** — missing crucial information (steps to reproduce, logs, version, etc.)
+     *If incomplete but potentially valid, use the **needs-info** decision instead of closing.*
    - **Not reproducible** — the described behavior cannot be replicated
    - **Duplicate** — already reported in another open or closed issue
    - **Off-topic** — not relevant to this project
@@ -45,6 +46,13 @@ You have `gh` available to search for duplicates — use it to find related issu
      { "decision": "valid", "tags": ["bug"] }
      ```
      Choose tags from the available repo labels listed above. Empty array if none apply.
+
+   - **Needs info** — potentially valid but missing crucial details:
+     ```json
+     { "decision": "needs-info", "comment": "Could you provide steps to reproduce?", "tags": ["needs-repro"] }
+     ```
+     Post a comment asking for the missing info. **Leave the issue open.**
+     Use this for reports that are incomplete rather than outright invalid.
 
    - **Invalid** — spam, incomplete, not reproducible, off-topic:
      ```json
