@@ -1,0 +1,55 @@
+name: 'KennyBot Issue Triage'
+description: 'Run KennyBot issue triage on a GitHub issue — searches for duplicates, assesses validity, and closes invalid issues.'
+author: 'jpenilla'
+
+inputs:
+  issue-number:
+    description: 'The GitHub issue number to triage'
+    required: true
+  custom-skill-path:
+    description: >
+      Path to a custom SKILL.md that replaces KennyBot's default triage skill,
+      relative to the consuming repo root. The skill is staged as 'kennybot-triage'
+      so it won't conflict with your own agents' skills.
+      Example: .github/kennybot-triage.md
+    required: false
+    default: ''
+  opencode-api-key:
+    description: 'API key for opencode-go/deepseek-v4-flash'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install KennyBot dependencies
+      shell: bash
+      run: npm ci
+      working-directory: ${{ github.action_path }}/../..
+
+    - name: Stage triage skill
+      shell: bash
+      run: |
+        mkdir -p .agents/skills/kennybot-triage
+        if [ -n '${{ inputs.custom-skill-path }}' ]; then
+          cp '${{ inputs.custom-skill-path }}' .agents/skills/kennybot-triage/SKILL.md
+          echo 'Using custom triage skill from ${{ inputs.custom-skill-path }}'
+        else
+          cp '${{ github.action_path }}/../../.agents/skills/kennybot-triage/SKILL.md' .agents/skills/kennybot-triage/SKILL.md
+          echo 'Using KennyBot built-in triage skill'
+        fi
+
+    - name: Run triage agent
+      shell: bash
+      env:
+        OPENCODE_API_KEY: ${{ inputs.opencode-api-key }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        KENNYBOT_ROOT='${{ github.action_path }}/../..'
+        npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
+          --id "triage-${{ inputs.issue-number }}" \
+          --payload '{"issueNumber": ${{ inputs.issue-number }}}' \
+          --workspace "$KENNYBOT_ROOT"
