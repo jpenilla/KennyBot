@@ -7,7 +7,6 @@ that other repositories consume via a composite GitHub Action.
 
 - `agents/triage.ts` — The triage agent handler
 - `.agents/skills/kennybot-triage/SKILL.md` — The default triage skill
-- `roles/triager.md` — The triager agent persona
 - `.github/actions/triage/action.yml` — Composite action for consumers
 - `.github/workflows/issue-triage.yml` — Workflow for this repo
 

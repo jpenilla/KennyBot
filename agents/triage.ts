@@ -27,7 +27,6 @@ export default async function ({ init, payload }: FlueContext) {
       issueNumber: payload.issueNumber,
     },
     commands: [gh],
-    role: 'triager',
     result: v.object({
       action: v.picklist(['closed', 'triaged']),
       reason: v.string(),

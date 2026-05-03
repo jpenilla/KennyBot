@@ -6,6 +6,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["agents/**/*.ts", "roles/**/*.ts"],
+  "include": ["agents/**/*.ts"],
   "exclude": ["dist"]
 }
