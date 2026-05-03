@@ -18,6 +18,7 @@ jobs:
     permissions:
       contents: read
       issues: read
+      pull-requests: read
     outputs:
       decision: ${{ steps.triage.outputs.decision }}
     steps:
