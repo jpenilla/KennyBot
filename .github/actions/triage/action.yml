@@ -1,5 +1,7 @@
 name: 'KennyBot Issue Triage'
-description: 'Run KennyBot issue triage on a GitHub issue — searches for duplicates, assesses validity, and closes invalid issues.'
+description: >
+  Analyze a GitHub issue and act on it — searches for duplicates, assesses validity,
+  and automatically closes or labels issues based on the agent's structured decision.
 author: 'jpenilla'
 
 inputs:
@@ -50,13 +52,34 @@ runs:
           echo 'Triage skill already present, skipping copy'
         fi
 
-    - name: Run triage agent
+    - name: Fetch data and run triage agent
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         KENNYBOT_ROOT='${{ github.action_path }}/../../..'
+        ISSUE_NUMBER=${{ inputs.issue-number }}
+        MODEL='${{ inputs.model }}'
+
+        # Fetch issue details and repo labels
+        echo "::group::Fetching issue data"
+        ISSUE_JSON=$(gh issue view "$ISSUE_NUMBER" --json title,body,author || echo '{"title":"","body":"","author":{"login":"unknown"}}')
+        LABELS_JSON=$(gh label list --json name --jq '[.[].name]' || echo '[]')
+        echo "::endgroup::"
+
+        # Build payload with proper JSON encoding
+        PAYLOAD=$(jq -n \
+          --argjson issueNumber "$ISSUE_NUMBER" \
+          --arg model "$MODEL" \
+          --arg issueTitle "$(echo "$ISSUE_JSON" | jq -r '.title // ""')" \
+          --arg issueBody "$(echo "$ISSUE_JSON" | jq -r '.body // ""')" \
+          --arg issueAuthor "$(echo "$ISSUE_JSON" | jq -r '.author.login // "unknown"')" \
+          --argjson repoLabels "$LABELS_JSON" \
+          '$ARGS.named')
+
+        echo "::group::Running triage agent"
         npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
-          --id "triage-${{ inputs.issue-number }}" \
-          --payload '{"issueNumber":${{ inputs.issue-number }},"model":"${{ inputs.model }}"}' \
+          --id "triage-$ISSUE_NUMBER" \
+          --payload "$(echo "$PAYLOAD" | jq -c .)" \
           --workspace "$KENNYBOT_ROOT"
+        echo "::endgroup::"
