@@ -51,7 +51,7 @@ switch (parsed.decision) {
       issue_number: issueNumber,
       body: parsed.comment || 'This issue has been closed as invalid.',
     });
-    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed' });
+    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed', state_reason: 'not_planned' });
     console.log(`  Closed: ${parsed.comment}`);
     break;
   }
@@ -64,7 +64,7 @@ switch (parsed.decision) {
       await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }
     await octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
-    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed' });
+    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed', state_reason: 'not_planned' });
     console.log(`  Closed as duplicate: ${parsed.comment}`);
     break;
   }
@@ -79,7 +79,7 @@ switch (parsed.decision) {
       issue_number: issueNumber,
       body: parsed.comment || 'This issue appears to have already been addressed.',
     });
-    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed' });
+    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed', state_reason: 'completed' });
     console.log(`  Closed: ${parsed.comment}`);
     break;
   }
