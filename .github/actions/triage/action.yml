@@ -65,10 +65,13 @@ runs:
         GH_TOKEN: ${{ github.token }}
       run: |
         KENNYBOT_ROOT='${{ github.action_path }}/../../..'
+        # flue run prints build progress to stdout and the final result JSON to stdout.
+        # Filter out [flue] build lines to get just the JSON result.
         RESULT=$(npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
           --id "triage-${{ inputs.issue-number }}" \
           --payload '{"issueNumber":${{ inputs.issue-number }},"model":"${{ inputs.model }}"}' \
-          --workspace "$KENNYBOT_ROOT" 2>/dev/null)
+          --workspace "$KENNYBOT_ROOT" 2>/dev/null \
+          | grep -v '^\[flue\]')
         echo 'decision<<EOF' >> "$GITHUB_OUTPUT"
         echo "$RESULT" >> "$GITHUB_OUTPUT"
         echo 'EOF' >> "$GITHUB_OUTPUT"
