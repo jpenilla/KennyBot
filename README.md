@@ -71,5 +71,5 @@ Two jobs, strict separation of concerns:
 |---|---|
 | `leave-open` | Comment (optional) + add labels, leave open |
 | `close-invalid` | Comment explaining why, close |
-| `close-duplicate` | Comment referencing original + `duplicateOf`, close |
+| `close-duplicate` | Comment referencing the original issue, close |
 | `close-done` | Comment noting already addressed, close |
