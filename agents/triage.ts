@@ -64,7 +64,7 @@ export default async function ({ init, payload }: FlueContext) {
       issueTitle: issue.title,
       issueBody: issue.body ?? '',
       issueAuthor: issue.user?.login ?? 'unknown',
-      repoLabels: repoLabels.join(', '),
+      repoLabels: repoLabels,
       repoOwner: owner,
       repoName: repo,
     },
