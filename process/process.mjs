@@ -4,7 +4,6 @@ import * as v from 'valibot';
 const DecisionSchema = v.object({
   decision: v.picklist(['leave-open', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.nullish(v.string()),
-  duplicateOf: v.nullish(v.number()),
   labels: v.optional(v.array(v.string()), []),
 });
 
@@ -56,10 +55,10 @@ switch (parsed.decision) {
     break;
   }
   case 'close-duplicate': {
-    console.log(`Issue #${issueNumber}: close-duplicate of #${parsed.duplicateOf}`);
-    const body = parsed.comment
-      ? `${parsed.comment}\n\nDuplicate of #${parsed.duplicateOf}`
-      : `Duplicate of #${parsed.duplicateOf}`;
+    const duplicateMatch = parsed.comment?.match(/#(\d+)/);
+    const duplicateOf = duplicateMatch ? parseInt(duplicateMatch[1], 10) : null;
+    console.log(`Issue #${issueNumber}: close-duplicate${duplicateOf ? ` of #${duplicateOf}` : ''}`);
+    const body = parsed.comment || 'This is a duplicate of another issue.';
     if (suggestedLabels.length > 0) {
       await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }

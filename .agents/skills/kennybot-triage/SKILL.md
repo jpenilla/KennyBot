@@ -46,7 +46,7 @@ You have `gh` available to search for duplicates — use it to find related issu
    - leave-open — legitimate, or needs more info. Add comment + labels if useful, leave open.
    - close-invalid — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
      Requires: `comment`
-   - close-duplicate — already reported. Include `duplicateOf` with the issue number, close.
-     Requires: `duplicateOf`, `comment`
+   - close-duplicate — already reported. Reference the original issue number in your comment (e.g. `This is a duplicate of #123`), then close.
+     Requires: `comment` (must include the issue number)
    - close-done — already fixed or addressed. Comment referencing the fix if known, close.
      Requires: `comment`
