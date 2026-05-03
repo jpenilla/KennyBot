@@ -26,6 +26,7 @@ jobs:
         uses: jpenilla/KennyBot/.github/actions/triage@main
         with:
           issue-number: ${{ github.event.issue.number }}
+          model: opencode-go/deepseek-v4-flash
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
 
@@ -43,21 +44,9 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
 ```
 
-Set `OPENCODE_API_KEY` as a repo secret. Open an issue — the bot will triage it.
+Set the API key for your chosen model as a repo secret. See [flueframework.com](https://flueframework.com) for available models and their env var names.
 
-### Custom model
-
-```yaml
-      - id: triage
-        uses: jpenilla/KennyBot/.github/actions/triage@main
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          model: anthropic/claude-sonnet-4-6
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-```
-
-See [flueframework.com](https://flueframework.com) for available models and their env var names.
+Open an issue — the bot will triage it.
 
 ### Custom skill
 

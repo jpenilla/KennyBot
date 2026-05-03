@@ -52,7 +52,7 @@ export default async function ({ init, payload }: FlueContext) {
 
   const agent = await init({
     sandbox: 'local',
-    model: payload.model ?? 'opencode-go/deepseek-v4-flash',
+    model: payload.model,
   });
   const session = await agent.session();
 
