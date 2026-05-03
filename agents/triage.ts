@@ -8,7 +8,8 @@ const TriageResultSchema = v.object({
   decision: v.picklist(['leave-open', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.nullish(v.string()),
   duplicateOf: v.nullish(v.number()),
-  labels: v.optional(v.array(v.string()), []),
+  addLabels: v.nullish(v.array(v.string()), []),
+  removeLabels: v.nullish(v.array(v.string()), []),
 });
 
 // `gh` is granted to the skill for read/search only. The skill instructions
@@ -64,6 +65,7 @@ export default async function ({ init, payload }: FlueContext) {
       issueTitle: issue.title,
       issueBody: issue.body ?? '',
       issueAuthor: issue.user?.login ?? 'unknown',
+      issueLabels: issue.labels.map((l: any) => l.name ?? '').filter(Boolean).join(', '),
       repoLabels: repoLabels,
       repoOwner: owner,
       repoName: repo,

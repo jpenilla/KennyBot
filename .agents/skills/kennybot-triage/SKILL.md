@@ -13,6 +13,7 @@ The repository is mounted at **/workspace** — you can browse, grep, and read f
 **Title**: <issueTitle>
 **Author**: <issueAuthor>
 **Body**: <issueBody>
+**Labels**: <issueLabels>
 
 **Available repo labels**:
 <repoLabels>
@@ -41,7 +42,7 @@ You have `gh` available to search for duplicates — use it to find related issu
 
 3. **Return your decision**
 
-   Choose from these, including `comment` and `labels` from the repo as appropriate:
+   Choose from these, including `comment`, `addLabels`, and `removeLabels` from the repo as appropriate:
 
    - leave-open — legitimate, or needs more info. Add comment + labels if useful, leave open.
    - close-invalid — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.

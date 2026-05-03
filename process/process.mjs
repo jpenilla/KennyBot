@@ -4,7 +4,8 @@ import * as v from 'valibot';
 const DecisionSchema = v.object({
   decision: v.picklist(['leave-open', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.nullish(v.string()),
-  labels: v.optional(v.array(v.string()), []),
+  addLabels: v.nullish(v.array(v.string()), []),
+  removeLabels: v.nullish(v.array(v.string()), []),
 });
 
 const ghToken = process.env.GH_TOKEN;
@@ -21,29 +22,41 @@ const raw = JSON.parse(process.env.DECISION || '{}');
 const parsed = v.parse(DecisionSchema, raw);
 
 const octokit = new Octokit({ auth: ghToken });
-const suggestedLabels = parsed.labels ?? [];
+const suggestedLabels = parsed.addLabels;
+const suggestedRemoveLabels = parsed.removeLabels;
+
+// Remove labels first, then add — so if a label appears in both, add wins
+async function applyLabelChanges() {
+  if (suggestedRemoveLabels.length > 0) {
+    await Promise.allSettled(
+      suggestedRemoveLabels.map(label =>
+        octokit.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: label })
+      )
+    );
+    console.log(`  Removed labels: ${suggestedRemoveLabels.join(', ')}`);
+  }
+  if (suggestedLabels.length > 0) {
+    await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
+    console.log(`  Added labels: ${suggestedLabels.join(', ')}`);
+  }
+}
 
 switch (parsed.decision) {
   case 'leave-open': {
     console.log(`Issue #${issueNumber}: leave-open`);
+    await applyLabelChanges();
     if (parsed.comment) {
       await octokit.issues.createComment({
         owner, repo, issue_number: issueNumber,
         body: parsed.comment,
       });
+      console.log(`  Commented: ${parsed.comment}`);
     }
-    if (suggestedLabels.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
-      console.log(`  Added labels: ${suggestedLabels.join(', ')}`);
-    }
-    if (parsed.comment) console.log(`  Commented: ${parsed.comment}`);
     break;
   }
   case 'close-invalid': {
     console.log(`Issue #${issueNumber}: close-invalid`);
-    if (suggestedLabels.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
-    }
+    await applyLabelChanges();
     await octokit.issues.createComment({
       owner,
       repo,
@@ -59,9 +72,7 @@ switch (parsed.decision) {
     const duplicateOf = duplicateMatch ? parseInt(duplicateMatch[1], 10) : null;
     console.log(`Issue #${issueNumber}: close-duplicate${duplicateOf ? ` of #${duplicateOf}` : ''}`);
     const body = parsed.comment || 'This is a duplicate of another issue.';
-    if (suggestedLabels.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
-    }
+    await applyLabelChanges();
     await octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
     await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed', state_reason: 'duplicate' });
     console.log(`  Closed as duplicate: ${parsed.comment}`);
@@ -69,9 +80,7 @@ switch (parsed.decision) {
   }
   case 'close-done': {
     console.log(`Issue #${issueNumber}: close-done`);
-    if (suggestedLabels.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
-    }
+    await applyLabelChanges();
     await octokit.issues.createComment({
       owner,
       repo,
