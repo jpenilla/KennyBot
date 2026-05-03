@@ -22,22 +22,25 @@ const raw = JSON.parse(process.env.DECISION || '{}');
 const parsed = v.parse(DecisionSchema, raw);
 
 const octokit = new Octokit({ auth: ghToken });
-const suggestedLabels = parsed.addLabels;
-const suggestedRemoveLabels = parsed.removeLabels;
 
-// Remove labels first, then add — so if a label appears in both, add wins
 async function applyLabelChanges() {
-  if (suggestedRemoveLabels.length > 0) {
+  // If a label appears in both add and remove, skip it entirely — this is likely a
+  // contradiction in the model output and we shouldn't act on it
+  const addSet = new Set(parsed.addLabels);
+  const removeSet = new Set(parsed.removeLabels);
+  const toAdd = parsed.addLabels.filter(l => !removeSet.has(l));
+  const toRemove = parsed.removeLabels.filter(l => !addSet.has(l));
+  if (toRemove.length > 0) {
     await Promise.allSettled(
-      suggestedRemoveLabels.map(label =>
+      toRemove.map(label =>
         octokit.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: label })
       )
     );
-    console.log(`  Removed labels: ${suggestedRemoveLabels.join(', ')}`);
+    console.log(`  Removed labels: ${toRemove.join(', ')}`);
   }
-  if (suggestedLabels.length > 0) {
-    await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
-    console.log(`  Added labels: ${suggestedLabels.join(', ')}`);
+  if (toAdd.length > 0) {
+    await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: toAdd }).catch(() => {});
+    console.log(`  Added labels: ${toAdd.join(', ')}`);
   }
 }
 
