@@ -76,7 +76,7 @@ runs:
             --arg resultPath "$RESULT_FILE" \
             '{issueNumber: $issueNumber, model: $model, _resultPath: $resultPath}'
           )" \
-          --workspace "$KENNYBOT_ROOT" > /dev/null 2>&1
+          --workspace "$KENNYBOT_ROOT" > /dev/null
 
         RESULT=$(cat "$RESULT_FILE")
         echo "decision<<EOF" >> "$GITHUB_OUTPUT"
