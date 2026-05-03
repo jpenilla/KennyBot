@@ -5,7 +5,7 @@ const DecisionSchema = v.object({
   decision: v.picklist(['valid', 'needs-info', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.optional(v.string()),
   duplicateOf: v.optional(v.number()),
-  tags: v.optional(v.array(v.string()), []),
+  labels: v.optional(v.array(v.string()), []),
 });
 
 const ghToken = process.env.GH_TOKEN;
@@ -22,26 +22,26 @@ const raw = JSON.parse(process.env.DECISION || '{}');
 const parsed = v.parse(DecisionSchema, raw);
 
 const octokit = new Octokit({ auth: ghToken });
-const tags = parsed.tags ?? [];
+const suggestedLabels = parsed.labels ?? [];
 
 switch (parsed.decision) {
   case 'valid': {
     console.log(`Issue #${issueNumber}: valid`);
-    if (tags.length > 0) {
+    if (suggestedLabels.length > 0) {
       await octokit.issues.addLabels({
         owner,
         repo,
         issue_number: issueNumber,
-        labels: tags,
+        labels: suggestedLabels,
       });
-      console.log(`  Added labels: ${tags.join(', ')}`);
+      console.log(`  Added labels: ${suggestedLabels.join(', ')}`);
     }
     break;
   }
   case 'needs-info': {
     console.log(`Issue #${issueNumber}: needs more info`);
-    if (tags.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: tags }).catch(() => {});
+    if (suggestedLabels.length > 0) {
+      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }
     await octokit.issues.createComment({
       owner,
@@ -55,8 +55,8 @@ switch (parsed.decision) {
   }
   case 'close-invalid': {
     console.log(`Issue #${issueNumber}: close-invalid`);
-    if (tags.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: tags }).catch(() => {});
+    if (suggestedLabels.length > 0) {
+      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }
     await octokit.issues.createComment({
       owner,
@@ -73,8 +73,8 @@ switch (parsed.decision) {
     const body = parsed.comment
       ? `${parsed.comment}\n\nDuplicate of #${parsed.duplicateOf}`
       : `Duplicate of #${parsed.duplicateOf}`;
-    if (tags.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: tags }).catch(() => {});
+    if (suggestedLabels.length > 0) {
+      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }
     await octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
     await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed' });
@@ -83,8 +83,8 @@ switch (parsed.decision) {
   }
   case 'close-done': {
     console.log(`Issue #${issueNumber}: close-done`);
-    if (tags.length > 0) {
-      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: tags }).catch(() => {});
+    if (suggestedLabels.length > 0) {
+      await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }
     await octokit.issues.createComment({
       owner,

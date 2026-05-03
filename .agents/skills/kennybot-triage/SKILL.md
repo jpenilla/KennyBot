@@ -41,11 +41,9 @@ You have `gh` available to search for duplicates — use it to find related issu
 
 3. **Return your decision**
 
-   Flue will tell you the exact output format via `---RESULT_START---` / `---RESULT_END---` delimiters.
+   Choose from these, including a `comment` when closing and `labels` from the repo as appropriate:
 
-   Choose one of these, including a `comment` when closing and `tags` from the repo labels as appropriate:
-
-   - **valid** — legitimate bug report, feature request, or improvement. Leave open. Optionally suggest tags.
+   - **valid** — legitimate bug report, feature request, or improvement. Leave open. Optionally suggest labels.
    - **needs-info** — potentially valid but missing details. Comment asking for info, leave open.
    - **close-invalid** — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
    - **close-duplicate** — already reported. Reference the duplicate issue number, close.

@@ -8,7 +8,7 @@ const TriageResultSchema = v.object({
   decision: v.picklist(['valid', 'needs-info', 'close-invalid', 'close-duplicate', 'close-done']),
   comment: v.optional(v.string()),
   duplicateOf: v.optional(v.number()),
-  tags: v.optional(v.array(v.string()), []),
+  labels: v.optional(v.array(v.string()), []),
 });
 
 // `gh` is granted to the skill for read/search only. The skill instructions
