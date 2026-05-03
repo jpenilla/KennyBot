@@ -43,7 +43,10 @@ You have `gh` available to search for duplicates — use it to find related issu
 
    Choose from these, including `comment` and `labels` from the repo as appropriate:
 
-   - **leave-open** — legitimate, or needs more info. Add comment + labels if useful, leave open.
-   - **close-invalid** — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
-   - **close-duplicate** — already reported. Include `duplicateOf` with the issue number, close.
-   - **close-done** — already fixed or addressed. Reference the fix if known, close.
+   - leave-open — legitimate, or needs more info. Add comment + labels if useful, leave open.
+   - close-invalid — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
+     Requires: `comment`
+   - close-duplicate — already reported. Include `duplicateOf` with the issue number, close.
+     Requires: `duplicateOf`, `comment`
+   - close-done — already fixed or addressed. Comment referencing the fix if known, close.
+     Requires: `comment`

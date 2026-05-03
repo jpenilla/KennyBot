@@ -6,8 +6,8 @@ import * as v from 'valibot';
 
 const TriageResultSchema = v.object({
   decision: v.picklist(['leave-open', 'close-invalid', 'close-duplicate', 'close-done']),
-  comment: v.optional(v.string()),
-  duplicateOf: v.optional(v.number()),
+  comment: v.nullish(v.string()),
+  duplicateOf: v.nullish(v.number()),
   labels: v.optional(v.array(v.string()), []),
 });
 
