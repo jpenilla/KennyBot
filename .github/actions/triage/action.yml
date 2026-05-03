@@ -33,7 +33,7 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - uses: actions/setup-node@v6
+    - uses: actions/setup-node@v4
       with:
         node-version: '24'
 
@@ -65,13 +65,20 @@ runs:
         GH_TOKEN: ${{ github.token }}
       run: |
         KENNYBOT_ROOT='${{ github.action_path }}/../../..'
-        # flue run prints build progress to stdout and the final result JSON to stdout.
-        # Filter out [flue] build lines to get just the JSON result.
-        RESULT=$(npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
-          --id "triage-${{ inputs.issue-number }}" \
-          --payload '{"issueNumber":${{ inputs.issue-number }},"model":"${{ inputs.model }}"}' \
-          --workspace "$KENNYBOT_ROOT" 2>/dev/null \
-          | grep -v '^\[flue\]')
-        echo 'decision<<EOF' >> "$GITHUB_OUTPUT"
+        ISSUE_NUM=${{ inputs.issue-number }}
+        RESULT_FILE="/tmp/kennybot-${ISSUE_NUM}.json"
+
+        npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
+          --id "triage-${ISSUE_NUM}" \
+          --payload "$(jq -n \
+            --argjson issueNumber "$ISSUE_NUM" \
+            --arg model '${{ inputs.model }}' \
+            --arg resultPath "$RESULT_FILE" \
+            '{issueNumber: $issueNumber, model: $model, _resultPath: $resultPath}'
+          )" \
+          --workspace "$KENNYBOT_ROOT" > /dev/null 2>&1
+
+        RESULT=$(cat "$RESULT_FILE")
+        echo "decision<<EOF" >> "$GITHUB_OUTPUT"
         echo "$RESULT" >> "$GITHUB_OUTPUT"
-        echo 'EOF' >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"
