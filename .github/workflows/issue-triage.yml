@@ -5,16 +5,33 @@ on:
     types: [opened]
 
 jobs:
-  triage:
+  analyze:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
-      issues: write
+      issues: read
+    outputs:
+      decision: ${{ steps.triage.outputs.decision }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/triage
+      - id: triage
+        uses: ./.github/actions/triage
         with:
           issue-number: ${{ github.event.issue.number }}
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+
+  process:
+    needs: analyze
+    if: ${{ needs.analyze.outputs.decision != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/process
+        with:
+          decision: ${{ needs.analyze.outputs.decision }}
+          issue-number: ${{ github.event.issue.number }}

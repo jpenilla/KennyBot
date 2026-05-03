@@ -1,7 +1,8 @@
 name: 'KennyBot Issue Triage'
 description: >
-  Analyze a GitHub issue and act on it — searches for duplicates, assesses validity,
-  and automatically closes or labels issues based on the agent's structured decision.
+  Analyze a GitHub issue — searches for duplicates and assesses validity.
+  Returns a structured JSON decision. Does not modify anything on GitHub
+  (read-only). Use KennyBot Issue Process to act on the decision.
 author: 'jpenilla'
 
 inputs:
@@ -23,6 +24,11 @@ inputs:
       Example: .github/kennybot-triage.md
     required: false
     default: ''
+
+outputs:
+  decision:
+    description: 'The triage decision JSON string'
+    value: ${{ steps.agent.outputs.decision }}
 
 runs:
   using: 'composite'
@@ -53,12 +59,16 @@ runs:
         fi
 
     - name: Run triage agent
+      id: agent
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         KENNYBOT_ROOT='${{ github.action_path }}/../../..'
-        npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
+        RESULT=$(npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
           --id "triage-${{ inputs.issue-number }}" \
           --payload '{"issueNumber":${{ inputs.issue-number }},"model":"${{ inputs.model }}"}' \
-          --workspace "$KENNYBOT_ROOT"
+          --workspace "$KENNYBOT_ROOT" 2>/dev/null)
+        echo 'decision<<EOF' >> "$GITHUB_OUTPUT"
+        echo "$RESULT" >> "$GITHUB_OUTPUT"
+        echo 'EOF' >> "$GITHUB_OUTPUT"

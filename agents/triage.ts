@@ -3,8 +3,6 @@ import { defineCommand } from '@flue/sdk/node';
 import { Octokit } from '@octokit/rest';
 import * as v from 'valibot';
 
-// Single object schema — simpler than a discriminated union and more forgiving
-// of how LLMs format JSON in their responses.
 const TriageResultSchema = v.object({
   decision: v.picklist(['valid', 'invalid', 'duplicate', 'done']),
   comment: v.optional(v.string()),
@@ -12,9 +10,9 @@ const TriageResultSchema = v.object({
   tags: v.optional(v.array(v.string()), []),
 });
 
-// `gh` is granted to the skill for read/search only — the skill instructions
-// never ask the agent to close or edit issues. Write operations are handled
-// programmatically via Octokit after the agent returns a structured decision.
+// `gh` is granted to the skill for read/search only. The skill instructions
+// never ask the agent to close or edit issues. This job has `issues: read`
+// permission, so write operations would fail anyway.
 const gh = defineCommand('gh', {
   env: {
     GH_TOKEN: process.env.GH_TOKEN,
@@ -24,6 +22,8 @@ const gh = defineCommand('gh', {
 export const triggers = {};
 
 export default async function ({ init, payload }: FlueContext) {
+  // Fetch issue details and repo labels via Octokit (read-only operations).
+  // Write operations are handled separately by the process job.
   const ghToken = process.env.GH_TOKEN;
   if (!ghToken) throw new Error('GH_TOKEN is required');
 
@@ -33,7 +33,6 @@ export default async function ({ init, payload }: FlueContext) {
 
   const octokit = new Octokit({ auth: ghToken });
 
-  // Fetch issue details and repo labels in parallel
   const [{ data: issue }, { data: labels }] = await Promise.all([
     octokit.issues.get({
       owner,
@@ -67,86 +66,6 @@ export default async function ({ init, payload }: FlueContext) {
     commands: [gh],
     result: TriageResultSchema,
   });
-
-  // Act on the decision programmatically
-  const tags = result.tags ?? [];
-
-  switch (result.decision) {
-    case 'valid': {
-      if (tags.length > 0) {
-        await octokit.issues.addLabels({
-          owner,
-          repo,
-          issue_number: payload.issueNumber,
-          labels: tags,
-        });
-      }
-      break;
-    }
-    case 'invalid': {
-      if (tags.length > 0) {
-        await octokit.issues
-          .addLabels({ owner, repo, issue_number: payload.issueNumber, labels: tags })
-          .catch(() => {});
-      }
-      await octokit.issues.createComment({
-        owner,
-        repo,
-        issue_number: payload.issueNumber,
-        body: result.comment || 'This issue has been closed as invalid.',
-      });
-      await octokit.issues.update({
-        owner,
-        repo,
-        issue_number: payload.issueNumber,
-        state: 'closed',
-      });
-      break;
-    }
-    case 'duplicate': {
-      const body = result.comment
-        ? `${result.comment}\n\nDuplicate of #${result.duplicateOf}`
-        : `Duplicate of #${result.duplicateOf}`;
-      if (tags.length > 0) {
-        await octokit.issues
-          .addLabels({ owner, repo, issue_number: payload.issueNumber, labels: tags })
-          .catch(() => {});
-      }
-      await octokit.issues.createComment({
-        owner,
-        repo,
-        issue_number: payload.issueNumber,
-        body,
-      });
-      await octokit.issues.update({
-        owner,
-        repo,
-        issue_number: payload.issueNumber,
-        state: 'closed',
-      });
-      break;
-    }
-    case 'done': {
-      if (tags.length > 0) {
-        await octokit.issues
-          .addLabels({ owner, repo, issue_number: payload.issueNumber, labels: tags })
-          .catch(() => {});
-      }
-      await octokit.issues.createComment({
-        owner,
-        repo,
-        issue_number: payload.issueNumber,
-        body: result.comment || 'This issue appears to have already been addressed.',
-      });
-      await octokit.issues.update({
-        owner,
-        repo,
-        issue_number: payload.issueNumber,
-        state: 'closed',
-      });
-      break;
-    }
-  }
 
   return result;
 }

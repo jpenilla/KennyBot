@@ -1,0 +1,31 @@
+name: 'KennyBot Issue Process'
+description: 'Process a KennyBot triage decision — close, comment, or label an issue. No LLM involvement, pure deterministic JS.'
+author: 'jpenilla'
+
+inputs:
+  decision:
+    description: 'JSON string containing the triage decision from the analyze step'
+    required: true
+  issue-number:
+    description: 'The GitHub issue number to act on'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Install KennyBot dependencies
+      shell: bash
+      run: npm ci
+      working-directory: ${{ github.action_path }}/../..
+
+    - name: Process decision
+      shell: bash
+      env:
+        DECISION: ${{ inputs.decision }}
+        ISSUE_NUMBER: ${{ inputs.issue-number }}
+        GH_TOKEN: ${{ github.token }}
+      run: node '${{ github.action_path }}/../../process/process.mjs'
