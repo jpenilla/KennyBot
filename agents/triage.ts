@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import type { FlueContext } from '@flue/sdk/client';
 import { defineCommand } from '@flue/sdk/node';
 import { Octokit } from '@octokit/rest';
@@ -47,28 +48,60 @@ export default async function ({ init, payload }: FlueContext) {
     }),
   ]);
 
-  const repoLabels = labels
-    .map((l) => l.description ? `- ${l.name}: ${l.description}` : `- ${l.name}`)
-    .join('\n');
+  const repoData = {
+    owner,
+    name: repo,
+    issueLabels: labels
+      .map((l) => l.description ? `- ${l.name}: ${l.description}` : `- ${l.name}`)
+      .join('\n')
+  }
 
+  // Paginate all comments and write to a file so the LLM can read on demand
+  const allComments = await octokit.paginate(octokit.issues.listComments, {
+    owner,
+    repo,
+    issue_number: payload.issueNumber,
+    per_page: 50,
+  });
+
+  const commentData = allComments.map((c) => ({
+    author: c.user?.login ?? 'unknown',
+    authorAssociation: c.author_association,
+    body: c.body ?? '',
+    createdAt: c.created_at,
+    updatedAt: c.updated_at,
+  }));
+
+  const commentsPath = `/workspace/.kennybot/comments-${payload.issueNumber}.json`;
+  await fs.mkdir(path.dirname(commentsPath), { recursive: true });
+  await fs.writeFile(commentsPath, JSON.stringify(commentData, null, 2));
+
+  const issueData = {
+    number: payload.issueNumber,
+    title: issue.title,
+    author: issue.user?.login ?? 'unknown',
+    authorAssociation: issue.author_association,
+    body: issue.body ?? '',
+    labels: issue.labels.map((l: any) => l.name ?? '').filter(Boolean),
+    state: issue.state,
+    createdAt: issue.created_at,
+    updatedAt: issue.updated_at,
+    commentCount: issue.comments,
+    commentsFile: issue.comments > 0 ? commentsPath : undefined,
+  };
+  issue.pull_request
+  
   const agent = await init({
     sandbox: 'local',
     model: payload.model,
   });
   const session = await agent.session();
-
   // Agent analyzes the issue and returns a structured decision.
-  // The skill has read-only gh access (search duplicates, view details).
+  // The skill has read-only gh access
   const result = await session.skill('kennybot-triage', {
     args: {
-      issueNumber: payload.issueNumber,
-      issueTitle: issue.title,
-      issueBody: issue.body ?? '',
-      issueAuthor: issue.user?.login ?? 'unknown',
-      issueLabels: issue.labels.map((l: any) => l.name ?? '').filter(Boolean).join(', '),
-      repoLabels: repoLabels,
-      repoOwner: owner,
-      repoName: repo,
+      repo: repoData,
+      issue: issueData,
     },
     commands: [gh],
     result: TriageResultSchema,
