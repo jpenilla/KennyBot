@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import type { FlueContext } from '@flue/sdk/client';
 import { defineCommand } from '@flue/sdk/node';
 import { Octokit } from '@octokit/rest';
@@ -68,6 +69,12 @@ export default async function ({ init, payload }: FlueContext) {
     commands: [gh],
     result: TriageResultSchema,
   });
+
+  // Write result to a file if a path was provided. The action reads this file
+  // instead of parsing flue's stdout, which contains build progress interleaved.
+  if (payload._resultPath) {
+    await fs.writeFile(payload._resultPath, JSON.stringify(result));
+  }
 
   return result;
 }
