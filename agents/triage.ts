@@ -3,28 +3,14 @@ import { defineCommand } from '@flue/sdk/node';
 import { Octokit } from '@octokit/rest';
 import * as v from 'valibot';
 
-const TriageResultSchema = v.union([
-  v.object({
-    decision: v.literal('valid'),
-    tags: v.array(v.string()),
-  }),
-  v.object({
-    decision: v.literal('invalid'),
-    comment: v.string(),
-    tags: v.array(v.string()),
-  }),
-  v.object({
-    decision: v.literal('duplicate'),
-    comment: v.string(),
-    duplicateOf: v.number(),
-    tags: v.array(v.string()),
-  }),
-  v.object({
-    decision: v.literal('done'),
-    comment: v.string(),
-    tags: v.array(v.string()),
-  }),
-]);
+// Single object schema — simpler than a discriminated union and more forgiving
+// of how LLMs format JSON in their responses.
+const TriageResultSchema = v.object({
+  decision: v.picklist(['valid', 'invalid', 'duplicate', 'done']),
+  comment: v.optional(v.string()),
+  duplicateOf: v.optional(v.number()),
+  tags: v.optional(v.array(v.string()), []),
+});
 
 // `gh` is granted to the skill for read/search only — the skill instructions
 // never ask the agent to close or edit issues. Write operations are handled
@@ -38,54 +24,70 @@ const gh = defineCommand('gh', {
 export const triggers = {};
 
 export default async function ({ init, payload }: FlueContext) {
+  const ghToken = process.env.GH_TOKEN;
+  if (!ghToken) throw new Error('GH_TOKEN is required');
+
+  const repoFull = process.env.GITHUB_REPOSITORY;
+  if (!repoFull) throw new Error('GITHUB_REPOSITORY is required');
+  const [owner, repo] = repoFull.split('/');
+
+  const octokit = new Octokit({ auth: ghToken });
+
+  // Fetch issue details and repo labels in parallel
+  const [{ data: issue }, { data: labels }] = await Promise.all([
+    octokit.issues.get({
+      owner,
+      repo,
+      issue_number: payload.issueNumber,
+    }),
+    octokit.issues.listLabelsForRepo({
+      owner,
+      repo,
+    }),
+  ]);
+
+  const repoLabels = labels.map((l) => l.name);
+
   const agent = await init({
     sandbox: 'local',
     model: payload.model ?? 'opencode-go/deepseek-v4-flash',
   });
   const session = await agent.session();
 
-  // Step 1: Agent analyzes the issue and returns a structured decision.
+  // Agent analyzes the issue and returns a structured decision.
   // The skill has read-only gh access (search duplicates, view details).
   const result = await session.skill('kennybot-triage', {
     args: {
       issueNumber: payload.issueNumber,
-      issueTitle: payload.issueTitle,
-      issueBody: payload.issueBody,
-      issueAuthor: payload.issueAuthor,
-      repoLabels: payload.repoLabels,
+      issueTitle: issue.title,
+      issueBody: issue.body ?? '',
+      issueAuthor: issue.user?.login ?? 'unknown',
+      repoLabels: repoLabels.join(', '),
     },
     commands: [gh],
     result: TriageResultSchema,
   });
 
-  // Step 2: Act on the decision programmatically — no agent involvement.
-  const ghToken = process.env.GH_TOKEN;
-  const repoFull = process.env.GITHUB_REPOSITORY;
-  if (!ghToken) throw new Error('GH_TOKEN is required');
-  if (!repoFull) throw new Error('GITHUB_REPOSITORY is required');
-  const [owner, repo] = repoFull.split('/');
-  const octokit = new Octokit({ auth: ghToken });
+  // Act on the decision programmatically
+  const tags = result.tags ?? [];
 
   switch (result.decision) {
     case 'valid': {
-      if (result.tags.length > 0) {
+      if (tags.length > 0) {
         await octokit.issues.addLabels({
           owner,
           repo,
           issue_number: payload.issueNumber,
-          labels: result.tags,
+          labels: tags,
         });
       }
       break;
     }
     case 'invalid': {
-      if (result.tags.length > 0) {
-        await octokit.issues.addLabels({
-          owner,
-          repo,
-          issue_number: payload.issueNumber,
-          labels: result.tags,
-        }).catch(() => {});
+      if (tags.length > 0) {
+        await octokit.issues
+          .addLabels({ owner, repo, issue_number: payload.issueNumber, labels: tags })
+          .catch(() => {});
       }
       await octokit.issues.createComment({
         owner,
@@ -103,15 +105,12 @@ export default async function ({ init, payload }: FlueContext) {
     }
     case 'duplicate': {
       const body = result.comment
-        ? `${result.comment}\n\n(Duplicate of #${result.duplicateOf})`
+        ? `${result.comment}\n\nDuplicate of #${result.duplicateOf}`
         : `Duplicate of #${result.duplicateOf}`;
-      if (result.tags.length > 0) {
-        await octokit.issues.addLabels({
-          owner,
-          repo,
-          issue_number: payload.issueNumber,
-          labels: result.tags,
-        }).catch(() => {});
+      if (tags.length > 0) {
+        await octokit.issues
+          .addLabels({ owner, repo, issue_number: payload.issueNumber, labels: tags })
+          .catch(() => {});
       }
       await octokit.issues.createComment({
         owner,
@@ -128,13 +127,10 @@ export default async function ({ init, payload }: FlueContext) {
       break;
     }
     case 'done': {
-      if (result.tags.length > 0) {
-        await octokit.issues.addLabels({
-          owner,
-          repo,
-          issue_number: payload.issueNumber,
-          labels: result.tags,
-        }).catch(() => {});
+      if (tags.length > 0) {
+        await octokit.issues
+          .addLabels({ owner, repo, issue_number: payload.issueNumber, labels: tags })
+          .catch(() => {});
       }
       await octokit.issues.createComment({
         owner,
