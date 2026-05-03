@@ -18,7 +18,7 @@ The repository is mounted at **/workspace** — you can browse, grep, and read f
 <repoLabels>
 
 Your job is to determine whether this issue is valid, invalid, a duplicate, or already done.
-You have `gh` available to search for duplicates — use it to find related issues.
+You have `gh` available to search for duplicates — use it to find related issues or PRs.
 
 1. **Search for duplicates**
    ```bash
@@ -47,6 +47,6 @@ You have `gh` available to search for duplicates — use it to find related issu
    - close-invalid — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
      Requires: `comment`
    - close-duplicate — already reported. Reference the original issue number in your comment (e.g. `This is a duplicate of #123`), then close.
-     Requires: `comment` (must include the issue number)
+     Requires: `comment`
    - close-done — already fixed or addressed. Comment referencing the fix if known, close.
      Requires: `comment`
