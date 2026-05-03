@@ -39,35 +39,14 @@ You have `gh` available to search for duplicates — use it to find related issu
    - **Off-topic** — not relevant to this project
    - **Valid** — a legitimate bug report, feature request, or improvement
 
-3. **Return your decision as one of these exact structures:**
+3. **Return your decision**
 
-   - **Valid** — the issue is legitimate:
-     ```json
-     { "decision": "valid", "tags": ["bug"] }
-     ```
-     Choose tags from the available repo labels listed above. Empty array if none apply.
+   Flue will tell you the exact output format via `---RESULT_START---` / `---RESULT_END---` delimiters.
 
-   - **Needs info** — potentially valid but missing crucial details:
-     ```json
-     { "decision": "needs-info", "comment": "Could you provide steps to reproduce?", "tags": ["needs-repro"] }
-     ```
-     Post a comment asking for the missing info. **Leave the issue open.**
-     Use this for reports that are incomplete rather than outright invalid.
+   Choose one of these, including a `comment` when closing and `tags` from the repo labels as appropriate:
 
-   - **Invalid** — spam, incomplete, not reproducible, off-topic:
-     ```json
-     { "decision": "invalid", "comment": "Thanks for reporting, but...", "tags": ["wontfix"] }
-     ```
-     Include a kind explanation. Tags are optional.
-
-   - **Duplicate** — already reported:
-     ```json
-     { "decision": "duplicate", "comment": "Already reported", "duplicateOf": 42, "tags": [] }
-     ```
-     Include the duplicate issue number and a brief comment.
-
-   - **Done** — already fixed or addressed:
-     ```json
-     { "decision": "done", "comment": "This was fixed in #abc", "tags": [] }
-     ```
-     Reference the fix if known.
+   - **valid** — legitimate bug report, feature request, or improvement. Leave open. Optionally suggest tags.
+   - **needs-info** — potentially valid but missing details. Comment asking for info, leave open.
+   - **close-invalid** — spam, incomplete, not reproducible, off-topic. Comment explaining why, close.
+   - **close-duplicate** — already reported. Reference the duplicate issue number, close.
+   - **close-done** — already fixed or addressed. Reference the fix if known, close.
