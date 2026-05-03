@@ -34,12 +34,16 @@ runs:
       shell: bash
       run: |
         mkdir -p .agents/skills/kennybot-triage
+        dst='.agents/skills/kennybot-triage/SKILL.md'
         if [ -n '${{ inputs.custom-skill-path }}' ]; then
-          cp '${{ inputs.custom-skill-path }}' .agents/skills/kennybot-triage/SKILL.md
+          cp '${{ inputs.custom-skill-path }}' "$dst"
           echo 'Using custom triage skill from ${{ inputs.custom-skill-path }}'
-        else
-          cp '${{ github.action_path }}/../../../.agents/skills/kennybot-triage/SKILL.md' .agents/skills/kennybot-triage/SKILL.md
+        elif [ ! -f "$dst" ]; then
+          src='${{ github.action_path }}/../../../.agents/skills/kennybot-triage/SKILL.md'
+          cp "$src" "$dst"
           echo 'Using KennyBot built-in triage skill'
+        else
+          echo 'Triage skill already present, skipping copy'
         fi
 
     - name: Run triage agent
