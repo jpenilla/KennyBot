@@ -87,7 +87,7 @@ export default async function ({ init, payload }: FlueContext) {
     createdAt: issue.created_at,
     updatedAt: issue.updated_at,
     commentCount: issue.comments,
-    commentsFile: issue.comments > 0 ? commentsPath : undefined,
+    commentsFile: issue.comments > 0 ? `/workspace/.kennybot/comments-${payload.issueNumber}.json` : undefined,
   };
   
   const agent = await init({
