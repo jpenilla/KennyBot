@@ -68,9 +68,7 @@ switch (parsed.decision) {
     break;
   }
   case 'close-duplicate': {
-    const duplicateMatch = parsed.comment?.match(/#(\d+)/);
-    const duplicateOf = duplicateMatch ? parseInt(duplicateMatch[1], 10) : null;
-    console.log(`Issue #${issueNumber}: close-duplicate${duplicateOf ? ` of #${duplicateOf}` : ''}`);
+    console.log(`Issue #${issueNumber}: close-duplicate`);
     const body = parsed.comment || 'This is a duplicate of another issue.';
     await applyLabelChanges();
     await octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
