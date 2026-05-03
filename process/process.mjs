@@ -64,7 +64,7 @@ switch (parsed.decision) {
       await octokit.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: suggestedLabels }).catch(() => {});
     }
     await octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
-    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed', state_reason: 'not_planned' });
+    await octokit.issues.update({ owner, repo, issue_number: issueNumber, state: 'closed', state_reason: 'duplicate' });
     console.log(`  Closed as duplicate: ${parsed.comment}`);
     break;
   }
