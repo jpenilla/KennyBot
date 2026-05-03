@@ -16,4 +16,5 @@ jobs:
       - uses: ./.github/actions/triage
         with:
           issue-number: ${{ github.event.issue.number }}
-          opencode-api-key: ${{ secrets.OPENCODE_API_KEY }}
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}

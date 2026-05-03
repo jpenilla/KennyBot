@@ -15,4 +15,4 @@ that other repositories consume via a composite GitHub Action.
 
 - The default triage skill should handle the common cases well
 - Keep the agent handler generic — consumers customize via skills, not code changes
-- Test with `npx flue run triage --target node --id test-1 --payload '{"issueNumber": 1}'`
+- Test with `npx flue run triage --target node --id test-1 --payload '{"issueNumber": 1, "model": "opencode-go/deepseek-v4-flash"}'`

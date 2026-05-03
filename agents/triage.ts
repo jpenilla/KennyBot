@@ -16,7 +16,7 @@ export const triggers = {};
 export default async function ({ init, payload }: FlueContext) {
   const agent = await init({
     sandbox: 'local',
-    model: 'opencode-go/deepseek-v4-flash',
+    model: payload.model ?? 'opencode-go/deepseek-v4-flash',
   });
   const session = await agent.session();
 
