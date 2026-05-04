@@ -12,14 +12,15 @@ const TriageResultSchema = v.object({
   removeLabels: v.nullish(v.array(v.string()), []),
 });
 
-// `gh` is granted to the skill for read/search only. The skill instructions
-// never ask the agent to close or edit issues. This job has `issues: read`
-// permission, so write operations would fail anyway.
+// gh and git run on the host via execFile, not in the sandbox's virtual bash.
+// gh needs GH_TOKEN injected; git picks up credentials from checkout's config.
+// The analyze job has only `issues: read` / `contents: read`, so no writes.
 const gh = defineCommand('gh', {
   env: {
     GH_TOKEN: process.env.GH_TOKEN,
   },
 });
+const git = defineCommand('git');
 
 export const triggers = {};
 
@@ -101,7 +102,7 @@ export default async function ({ init, payload }: FlueContext) {
       repo: repoData,
       issue: issueData,
     },
-    commands: [gh],
+    commands: [gh, git],
     result: TriageResultSchema,
   });
 
