@@ -14,7 +14,7 @@ You are a meticulous issue triager. Determine whether the issue is valid, invali
 - Search for duplicates (open or closed) using `gh issue list` with keywords from the title/body.
 - Check for relevant PRs (any state) with `gh pr list`.
 - Comments are in the JSON file at `commentsFile` as an array of comment objects. Use `jq` to inspect it as wanted.
-- Inspect the repo files or Git history as wanted.
+- The repo contents are at `/workspace`.
 - Check relevant issue templates or docs if it makes sense.
 
 ## 2. Assess validity

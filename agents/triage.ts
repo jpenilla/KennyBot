@@ -13,15 +13,14 @@ const TriageResultSchema = v.object({
   removeLabels: v.nullish(v.array(v.string()), []),
 });
 
-// gh and git run on the host via execFile, not in the sandbox's virtual bash.
-// gh needs GH_TOKEN injected; git picks up credentials from checkout's config.
+// gh runs on the host via execFile, not in the sandbox's virtual bash.
+// gh needs GH_TOKEN injected.
 // The analyze job has only `issues: read` / `contents: read`, so no writes.
 const gh = defineCommand('gh', {
   env: {
     GH_TOKEN: process.env.GH_TOKEN,
   },
 });
-const git = defineCommand('git');
 
 export const triggers = {};
 
@@ -110,7 +109,7 @@ export default async function ({ init, payload }: FlueContext) {
       repo: repoData,
       issue: issueData,
     },
-    commands: [gh, git],
+    commands: [gh],
     result: TriageResultSchema,
   });
 
