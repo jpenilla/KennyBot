@@ -2,10 +2,13 @@ name: Issue Triage
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 jobs:
   analyze:
+    if: |
+      github.event.action == 'opened' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'auto-triage')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -37,3 +40,4 @@ jobs:
         with:
           decision: ${{ needs.analyze.outputs.decision }}
           issue-number: ${{ github.event.issue.number }}
+          trigger-label: auto-triage

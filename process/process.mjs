@@ -100,3 +100,11 @@ switch (parsed.decision) {
     break;
   }
 }
+
+// Remove the trigger label if configured (e.g. label-triggered manual triage).
+// This runs regardless of decision type, after all other mutations.
+const triggerLabel = process.env.TRIGGER_LABEL;
+if (triggerLabel) {
+  await octokit.issues.removeLabel({ owner, repo, issue_number: issueNumber, name: triggerLabel }).catch(() => {});
+  console.log(`  Removed trigger label: ${triggerLabel}`);
+}

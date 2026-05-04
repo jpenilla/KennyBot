@@ -10,10 +10,13 @@ Add this workflow to your repo (`.github/workflows/issue-triage.yml`):
 name: Issue Triage
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 jobs:
   analyze:
+    if: |
+      github.event.action == 'opened' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'auto-triage')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,11 +46,21 @@ jobs:
         with:
           decision: ${{ needs.analyze.outputs.decision }}
           issue-number: ${{ github.event.issue.number }}
+          trigger-label: auto-triage
 ```
 
 Set the API key for your chosen model as a repo secret. See [flueframework.com](https://flueframework.com) for available models and their env var names.
 
 Open an issue — the bot will triage it.
+
+### Manual triage via label
+
+Trigger triage on demand by adding a configured label to any issue. The process
+step removes the label automatically after the LLM finishes.
+
+To enable, add `labeled` to the trigger types, add the `if` condition shown
+above, and set `trigger-label` to your chosen label name. The example above
+uses `auto-triage`.
 
 ### Custom skill
 

@@ -9,6 +9,13 @@ inputs:
   issue-number:
     description: 'The GitHub issue number to act on'
     required: true
+  trigger-label:
+    description: >
+      Optional label name that will be removed after processing. Used for
+      label-triggered manual triage — adding this label to an issue triggers
+      triage, and the script cleans it up automatically.
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -27,5 +34,6 @@ runs:
       env:
         DECISION: ${{ inputs.decision }}
         ISSUE_NUMBER: ${{ inputs.issue-number }}
+        TRIGGER_LABEL: ${{ inputs.trigger-label }}
         GH_TOKEN: ${{ github.token }}
       run: node '${{ github.action_path }}/../../../process/process.mjs'
