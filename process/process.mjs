@@ -23,6 +23,13 @@ const parsed = v.parse(DecisionSchema, raw);
 
 const octokit = new Octokit({ auth: ghToken });
 
+// Narrow race window: if the issue is already closed, bail before any write ops.
+const { data: issue } = await octokit.issues.get({ owner, repo, issue_number: issueNumber });
+if (issue.state === 'closed') {
+  console.log(`Issue #${issueNumber} is already closed — skipping all write operations.`);
+  process.exit(0);
+}
+
 async function applyLabelChanges() {
   // If a label appears in both add and remove, skip it entirely — this is likely a
   // contradiction in the model output and we shouldn't act on it
