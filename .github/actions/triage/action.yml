@@ -68,7 +68,7 @@ runs:
         RESULT_FILE="/tmp/kennybot-${ISSUE_NUM}.json"
 
         npx --prefix "$KENNYBOT_ROOT" flue run triage --target node \
-          --output "$GITHUB_WORKSPACE" \
+          --output "$KENNYBOT_ROOT" \
           --id "triage-${ISSUE_NUM}" \
           --payload "$(jq -n \
             --argjson issueNumber "$ISSUE_NUM" \

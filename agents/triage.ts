@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { FlueContext } from '@flue/sdk/client';
 import { defineCommand } from '@flue/sdk/node';
 import { Octokit } from '@octokit/rest';
+import { Bash, ReadWriteFs, MountableFs, InMemoryFs } from 'just-bash';
 import * as v from 'valibot';
 
 const TriageResultSchema = v.object({
@@ -72,7 +73,8 @@ export default async function ({ init, payload }: FlueContext) {
     updatedAt: c.updated_at,
   }));
 
-  const commentsPath = path.join(process.cwd(), '.kennybot', `comments-${payload.issueNumber}.json`);
+  const workspaceRoot = process.env.GITHUB_WORKSPACE ?? process.cwd();
+  const commentsPath = path.join(workspaceRoot, '.kennybot', `comments-${payload.issueNumber}.json`);
   await fs.mkdir(path.dirname(commentsPath), { recursive: true });
   await fs.writeFile(commentsPath, JSON.stringify(commentData, null, 2));
 
@@ -91,7 +93,13 @@ export default async function ({ init, payload }: FlueContext) {
   };
   
   const agent = await init({
-    sandbox: 'local',
+    sandbox: () => {
+      const ws = process.env.GITHUB_WORKSPACE ?? process.cwd();
+      const rwfs = new ReadWriteFs({ root: ws });
+      const fs = new MountableFs({ base: new InMemoryFs() });
+      fs.mount('/workspace', rwfs);
+      return new Bash({ fs, cwd: '/workspace', network: { dangerouslyAllowFullInternetAccess: true } });
+    },
     model: payload.model,
   });
   const session = await agent.session();
