@@ -18,7 +18,7 @@ jobs:
     outputs:
       decision: ${{ steps.triage.outputs.decision }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - id: triage
         uses: ./.github/actions/triage
         with:
@@ -35,7 +35,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/process
         with:
           decision: ${{ needs.analyze.outputs.decision }}
